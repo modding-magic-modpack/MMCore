@@ -1,5 +1,7 @@
 package net.moddingmagic.mmcore;
 
+import net.moddingmagic.mmcore.buffstacking.BuffStackingManager;
+import net.neoforged.fml.event.config.ModConfigEvent;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -39,7 +41,10 @@ public class MMCore {
         modEventBus.addListener(this::addCreative);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        modContainer.registerConfig(ModConfig.Type.COMMON, BuffStackingConfig.SPEC, "mmcore-buff-stacking.toml");
+
+        modEventBus.addListener(this::onConfigLoad);
+        modEventBus.addListener(this::onConfigReload);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
@@ -55,5 +60,17 @@ public class MMCore {
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
 
+    }
+
+    private void onConfigLoad(ModConfigEvent.Loading event) {
+        if (event.getConfig().getSpec() == BuffStackingConfig.SPEC) {
+            BuffStackingManager.reload();
+        }
+    }
+
+    private void onConfigReload(ModConfigEvent.Reloading event) {
+        if (event.getConfig().getSpec() == BuffStackingConfig.SPEC) {
+            BuffStackingManager.reload();
+        }
     }
 }
