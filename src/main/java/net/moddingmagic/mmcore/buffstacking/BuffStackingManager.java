@@ -14,10 +14,10 @@ public class BuffStackingManager {
     private static List<BuffStackingRule>  effectRules = List.of();
     private static List<SpellStackingRule> spellRules  = List.of();
 
-    /** Re-resolve rules from the current config values. */
-    public static void reload() {
-        effectRules = BuffStackingRule.resolveAll();
-        spellRules  = SpellStackingRule.resolveAll();
+    public static void applyRules(List<BuffStackingRule> newEffectRules,
+                                  List<SpellStackingRule> newSpellRules) {
+        effectRules = List.copyOf(newEffectRules);
+        spellRules  = List.copyOf(newSpellRules);
     }
 
     // Effect evaluation
@@ -49,7 +49,6 @@ public class BuffStackingManager {
             MobEffect activeType = activeInstance.getEffect().value();
 
             for (SpellStackingRule rule : spellRules) {
-
                 if (rule.matches(activeType, spell)) {
                     return rule.replace()
                             ? RuleResult.replace(activeInstance)

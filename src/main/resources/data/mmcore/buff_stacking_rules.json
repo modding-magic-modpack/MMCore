@@ -1,0 +1,31 @@
+{
+  "effect_rules": [
+    {
+      "active_effects":   ["minecraft:speed", "minecraft:haste"],
+      "incoming_effects": ["minecraft:speed"],
+      "replace": false
+    },
+    {
+      "active_effects":   ["minecraft:regeneration"],
+      "incoming_effects": ["minecraft:poison"],
+      "replace": true
+    },
+    {
+      "active_effects":   ["minecraft:absorption", "minecraft:resistance"],
+      "incoming_effects": ["minecraft:absorption", "minecraft:resistance"],
+      "replace": true
+    }
+  ],
+  "spell_rules": [
+    {
+      "active_effects": ["minecraft:resistance"],
+      "blocked_spells": ["irons_spellbooks:fortify"],
+      "replace": false
+    },
+    {
+      "active_effects": ["irons_spellbooks:oakskin"],
+      "blocked_spells": ["irons_spellbooks:fortify"],
+      "replace": true
+    }
+  ]
+}

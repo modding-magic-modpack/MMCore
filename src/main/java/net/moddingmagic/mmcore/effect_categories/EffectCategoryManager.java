@@ -107,6 +107,21 @@ public class EffectCategoryManager implements PreparableReloadListener {
         return effectToCategoriesCache.getOrDefault(effectHolder, Collections.emptyList());
     }
 
+    public List<EffectCategory> getCategories() {
+        return categories;
+    }
+
+    public void applyFromNetwork(List<EffectCategory> received) {
+        applyCategories(received);
+        MMCore.LOGGER.debug("Received {} effect categories from server.", received.size());
+    }
+
+    private void applyCategories(List<EffectCategory> loaded) {
+        this.categories = Collections.unmodifiableList(loaded);
+        this.effectToCategoriesCache = new HashMap<>();
+        this.cacheBuilt = false;
+    }
+
     private void buildCache() {
         Map<Holder<MobEffect>, List<EffectCategory>> cache = new HashMap<>();
 

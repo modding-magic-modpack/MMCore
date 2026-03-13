@@ -1,11 +1,14 @@
 package net.moddingmagic.mmcore;
 
 import net.moddingmagic.mmcore.buffstacking.BuffStackingManager;
-import net.moddingmagic.mmcore.config.BuffStackingConfig;
+import net.moddingmagic.mmcore.buffstacking.BuffStackingRulesLoader;
 import net.moddingmagic.mmcore.config.FormulaConfig;
 import net.moddingmagic.mmcore.effect_categories.EffectCategoryManager;
+import net.moddingmagic.mmcore.network.SyncEffectCategoriesPayload;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.OnDatapackSyncEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -43,11 +46,7 @@ public class MMCore {
         modEventBus.addListener(this::addCreative);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
-        modContainer.registerConfig(ModConfig.Type.COMMON, BuffStackingConfig.SPEC, "mmcore-buff-stacking.toml");
         modContainer.registerConfig(ModConfig.Type.COMMON, FormulaConfig.SPEC, "mmcore-formulas.toml");
-
-        modEventBus.addListener(this::onConfigLoad);
-        modEventBus.addListener(this::onConfigReload);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
@@ -68,17 +67,20 @@ public class MMCore {
     @SubscribeEvent
     public void onAddReloadListeners(AddReloadListenerEvent event) {
         event.addListener(EffectCategoryManager.INSTANCE);
+        event.addListener(BuffStackingRulesLoader.INSTANCE);
     }
 
-    private void onConfigLoad(ModConfigEvent.Loading event) {
-        if (event.getConfig().getSpec() == BuffStackingConfig.SPEC) {
-            BuffStackingManager.reload();
-        }
-    }
+    @SubscribeEvent
+    public void onDatapackSync(OnDatapackSyncEvent event) {
+        SyncEffectCategoriesPayload payload =
+                new SyncEffectCategoriesPayload(EffectCategoryManager.INSTANCE.getCategories());
 
-    private void onConfigReload(ModConfigEvent.Reloading event) {
-        if (event.getConfig().getSpec() == BuffStackingConfig.SPEC) {
-            BuffStackingManager.reload();
+        if (event.getPlayer() != null) {
+            // Single player just logged in
+            PacketDistributor.sendToPlayer(event.getPlayer(), payload);
+        } else {
+            // Full /reload — send to all online players
+            PacketDistributor.sendToAllPlayers(payload);
         }
     }
 }

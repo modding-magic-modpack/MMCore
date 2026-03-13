@@ -7,15 +7,13 @@ import net.minecraft.world.effect.MobEffect;
 import net.moddingmagic.mmcore.effect_categories.EffectCategory;
 import net.moddingmagic.mmcore.effect_categories.EffectCategoryManager;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.GatherEffectScreenTooltipsEvent;
 
 import java.util.List;
 
-@OnlyIn(Dist.CLIENT)
-@EventBusSubscriber
+@EventBusSubscriber(value = Dist.CLIENT)
 public class EffectTooltipHandler {
 
     @SubscribeEvent
