@@ -2,6 +2,7 @@
   "replace": false,
   "values": [],
   "remove": [
-    "irons_spellbooks:mana_ring"
+    "irons_spellbooks:mana_ring",
+    "irons_spellbooks:betrayer_signet"
   ]
 }

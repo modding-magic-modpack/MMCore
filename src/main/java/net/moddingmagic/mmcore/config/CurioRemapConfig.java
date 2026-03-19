@@ -38,7 +38,8 @@ public class CurioRemapConfig {
                 .defineListAllowEmpty(
                         "entries",
                         List.of(
-                                "irons_spellbooks:mana_ring | ring | necklace"
+                                "irons_spellbooks:mana_ring | ring | necklace",
+                                "irons_spellbooks:betrayer_signet | ring | testing"
                         ),
                         entry -> entry instanceof String s && isValidEntry(s)
                 );

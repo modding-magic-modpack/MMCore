@@ -36,57 +36,93 @@ public class CurioEquipHandler {
         if (itemId == null) return;
 
         CuriosApi.getCuriosInventory(player).ifPresent(inv -> {
-            // Build slot priority list:
-            // 1. Remapped target slots first (if configured)
-            // 2. Native slots from Curios tag system
             List<String> slotsToTry = new ArrayList<>();
 
             CurioRemapConfig.getRemap(itemId).ifPresent(remap ->
                     slotsToTry.addAll(remap.targetSlots())
             );
 
-            // getItemStackSlots returns Map<String, ISlotType>
             CuriosApi.getItemStackSlots(stack, player).keySet().forEach(slotId -> {
                 if (!slotsToTry.contains(slotId)) {
                     slotsToTry.add(slotId);
                 }
             });
 
-            // inv.getCurios() returns Map<String, ICurioStacksHandler>
             var curiosMap = inv.getCurios();
+
+            // Track the first valid slot we find for swapping, in case no empty slot exists
+            String swapSlotId = null;
+            int swapIndex = -1;
 
             for (String slotId : slotsToTry) {
                 var stacksHandler = curiosMap.get(slotId);
                 if (stacksHandler == null) continue;
 
-                // getStacks() returns IItemHandlerModifiable
                 var stacks = stacksHandler.getStacks();
                 for (int i = 0; i < stacks.getSlots(); i++) {
-                    if (!stacks.getStackInSlot(i).isEmpty()) continue;
-
                     SlotContext ctx = new SlotContext(slotId, player, i, false, false);
-
                     if (!curioItem.canEquip(ctx, stack)) continue;
 
-                    ItemStack toEquip = stack.copyWithCount(1);
-                    stacks.setStackInSlot(i, toEquip);
-                    stack.shrink(1);
+                    if (stacks.getStackInSlot(i).isEmpty()) {
+                        // Found an empty slot — equip directly, no need to swap
+                        ItemStack toEquip = stack.copyWithCount(1);
+                        stacks.setStackInSlot(i, toEquip);
+                        stack.shrink(1);
+                        playEquipSound(curioItem, ctx, toEquip, player);
+                        event.setCanceled(true);
+                        event.setCancellationResult(InteractionResult.sidedSuccess(false));
+                        return;
+                    }
 
-                    ICurio.SoundInfo sound = curioItem.getEquipSound(ctx, toEquip);
-                    player.level().playSound(
-                            null,
-                            player.blockPosition(),
-                            sound.getSoundEvent(),
-                            SoundSource.PLAYERS,
-                            sound.getVolume(),
-                            sound.getPitch()
-                    );
-
-                    event.setCanceled(true);
-                    event.setCancellationResult(InteractionResult.sidedSuccess(false));
-                    return;
+                    // Remember the first occupied valid slot for swapping
+                    if (swapSlotId == null) {
+                        swapSlotId = slotId;
+                        swapIndex = i;
+                    }
                 }
             }
+
+            // No empty slot found — swap with the first valid occupied slot
+            if (swapSlotId != null) {
+                var stacksHandler = curiosMap.get(swapSlotId);
+                if (stacksHandler == null) return;
+
+                var stacks = stacksHandler.getStacks();
+                SlotContext ctx = new SlotContext(swapSlotId, player, swapIndex, false, false);
+
+                ItemStack existing = stacks.getStackInSlot(swapIndex).copy();
+                ItemStack toEquip = stack.copyWithCount(1);
+
+                // Unequip the existing item first so its attributes are removed cleanly
+                if (stacks.getStackInSlot(swapIndex).getItem() instanceof ICurioItem existingCurio) {
+                    existingCurio.onUnequip(ctx, existing, stacks.getStackInSlot(swapIndex));
+                }
+
+                stacks.setStackInSlot(swapIndex, toEquip);
+                stack.shrink(1);
+
+                // Give the unequipped item back to the player's inventory, or drop it if inventory is full
+                if (!player.getInventory().add(existing)) {
+                    player.drop(existing, false);
+                }
+
+                playEquipSound(curioItem, ctx, toEquip, player);
+                event.setCanceled(true);
+                event.setCancellationResult(InteractionResult.sidedSuccess(false));
+            }
         });
+    }
+
+    private static void playEquipSound(ICurioItem curioItem, SlotContext ctx,
+                                       ItemStack stack, Player player) {
+        ICurio.SoundInfo sound = curioItem.getEquipSound(ctx, stack);
+        player.level().playSound(
+                null,
+                player.blockPosition(),
+                sound.getSoundEvent(),
+                SoundSource.PLAYERS,
+                sound.getVolume(),
+                sound.getPitch()
+        );
     }
 }
