@@ -1,5 +1,6 @@
 package net.moddingmagic.mmcore.network;
 
+import net.moddingmagic.mmcore.config.CurioRemapConfig;
 import net.moddingmagic.mmcore.effect_categories.EffectCategoryManager;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -12,6 +13,12 @@ public class ClientPayloadHandler {
     public static void handleSyncEffectCategories(SyncEffectCategoriesPayload payload, IPayloadContext context) {
         context.enqueueWork(() ->
                 EffectCategoryManager.INSTANCE.applyFromNetwork(payload.categories())
+        );
+    }
+
+    public static void handleCurioRemapSync(SyncCurioRemapsPayload payload, IPayloadContext context) {
+        context.enqueueWork(() ->
+                CurioRemapConfig.applyServerRemaps(payload.remaps())
         );
     }
 }

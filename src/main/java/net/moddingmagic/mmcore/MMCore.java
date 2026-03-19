@@ -1,13 +1,17 @@
 package net.moddingmagic.mmcore;
 
+import net.minecraft.server.level.ServerPlayer;
 import net.moddingmagic.mmcore.buffstacking.BuffStackingManager;
 import net.moddingmagic.mmcore.buffstacking.BuffStackingRulesLoader;
+import net.moddingmagic.mmcore.config.CurioRemapConfig;
 import net.moddingmagic.mmcore.config.FormulaConfig;
 import net.moddingmagic.mmcore.effect_categories.EffectCategoryManager;
+import net.moddingmagic.mmcore.network.SyncCurioRemapsPayload;
 import net.moddingmagic.mmcore.network.SyncEffectCategoriesPayload;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.slf4j.Logger;
 
@@ -44,9 +48,12 @@ public class MMCore {
 
         // Register the item to a creative tab
         modEventBus.addListener(this::addCreative);
+        modEventBus.addListener(this::onConfigLoad);
+        modEventBus.addListener(this::onConfigReload);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, FormulaConfig.SPEC, "mmcore-formulas.toml");
+        modContainer.registerConfig(ModConfig.Type.COMMON, CurioRemapConfig.SPEC, "mmcore-curio-remaps.toml");
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
@@ -56,6 +63,21 @@ public class MMCore {
     // Add the example block item to the building blocks tab
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
 
+    }
+
+    public void onConfigLoad(ModConfigEvent.Loading event) {
+        if (event.getConfig().getSpec() == CurioRemapConfig.SPEC) {
+            CurioRemapConfig.buildRemapTable();
+        }
+    }
+
+    public void onConfigReload(ModConfigEvent.Reloading event) {
+        if (event.getConfig().getSpec() == CurioRemapConfig.SPEC) {
+            CurioRemapConfig.buildRemapTable();
+            PacketDistributor.sendToAllPlayers(
+                    new SyncCurioRemapsPayload(CurioRemapConfig.getAllRemaps())
+            );
+        }
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
@@ -81,6 +103,17 @@ public class MMCore {
         } else {
             // Full /reload — send to all online players
             PacketDistributor.sendToAllPlayers(payload);
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        // Send the current server remap table to the joining player.
+        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+            PacketDistributor.sendToPlayer(
+                    serverPlayer,
+                    new SyncCurioRemapsPayload(CurioRemapConfig.getAllRemaps())
+            );
         }
     }
 }

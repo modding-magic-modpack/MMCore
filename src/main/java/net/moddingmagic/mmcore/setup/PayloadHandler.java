@@ -2,6 +2,7 @@ package net.moddingmagic.mmcore.setup;
 
 import net.moddingmagic.mmcore.MMCore;
 import net.moddingmagic.mmcore.network.ClientPayloadHandler;
+import net.moddingmagic.mmcore.network.SyncCurioRemapsPayload;
 import net.moddingmagic.mmcore.network.SyncEffectCategoriesPayload;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -18,6 +19,12 @@ public class PayloadHandler {
                 SyncEffectCategoriesPayload.TYPE,
                 SyncEffectCategoriesPayload.STREAM_CODEC,
                 ClientPayloadHandler::handleSyncEffectCategories
+        );
+
+        payloadRegistrar.playToClient(
+                SyncCurioRemapsPayload.TYPE,
+                SyncCurioRemapsPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleCurioRemapSync
         );
     }
 }
