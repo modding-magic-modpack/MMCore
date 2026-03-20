@@ -37,10 +37,7 @@ public class CurioRemapConfig {
         REMAPS = b.comment("List of curio slot remapping entries.")
                 .defineListAllowEmpty(
                         "entries",
-                        List.of(
-                                "irons_spellbooks:mana_ring | ring | necklace",
-                                "irons_spellbooks:betrayer_signet | ring | testing"
-                        ),
+                        List.of(),
                         entry -> entry instanceof String s && isValidEntry(s)
                 );
 
