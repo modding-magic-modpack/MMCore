@@ -5,8 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "mmcore.refmap.json",
   "mixins": [
-    "SpellAccessorMixin",
-    "SpellPowerMixin"
+    "SpellAccessorMixin"
   ],
   "client": [
     "JeedEffectRendererMixin"
